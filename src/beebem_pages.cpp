@@ -10,7 +10,6 @@
 #include "main.h"
 #include "windows.h"
 
-#include <gtk/gtk.h>
 #include <iostream>
 #include <stdint.h>
 
@@ -329,11 +328,12 @@ static void ProcessGUIOption(EG_Widget *widget_ptr, void *user_ptr) {
 
 // TEMP FILE SELECTOR ======================================================
 
-static char *gtk_file_selector_filename_ptr;
-static GtkWidget *filew;
+//static char *gtk_file_selector_filename_ptr;
+//static GtkWidget *filew;
 int got_file;
 bool was_full_screen = false;
 
+#if 0
 /* Get the selected filename and print it to the console */
 static void file_ok_sel(GtkWidget *w, GtkFileSelection *fs) {
   // g_print ("%s\n", gtk_file_selection_get_filename (GTK_FILE_SELECTION
@@ -349,8 +349,10 @@ static void file_ok_sel(GtkWidget *w, GtkFileSelection *fs) {
     EG_TickBox_Tick(gui.fullscreen_widget_ptr);
   }
 }
+#endif /* 0 */
 
 int Save_GTK_File_Selector(char *filename_ptr) {
+#if 0
   if (filename_ptr == NULL) {
     qERROR("filename_ptr is NULL! Cannot open GTK File selector!");
     return false;
@@ -389,9 +391,12 @@ int Save_GTK_File_Selector(char *filename_ptr) {
 
   was_full_screen = false;
   return (got_file);
+#endif /* 0 */
+  return 0;
 }
 
 int Open_GTK_File_Selector(char *filename_ptr) {
+#if 0
 
   if (filename_ptr == NULL) {
     qERROR("filename_ptr is NULL! Cannot open GTK File selector!");
@@ -431,6 +436,8 @@ int Open_GTK_File_Selector(char *filename_ptr) {
 
   was_full_screen = false;
   return (got_file);
+#endif /* 0 */
+  return 0;
 }
 
 static void RunDisc(ATTR_UNUSED EG_Widget *widget_ptr, void *user_ptr) {
