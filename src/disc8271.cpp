@@ -62,7 +62,7 @@ static int PresentParam;         /* From 0 */
 static unsigned char Params[16]; /* Wildly more than we need */
 
 static int Selects[2];            /* Drive selects */
-static int Writeable[2] = {0, 0}; /* True if the drives are writeable */
+static int Writeable[2] = {1, 1}; /* True if the drives are writeable */
 
 static int FirstWriteInt; /* Indicates the start of a write operation */
 
