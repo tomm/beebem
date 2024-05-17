@@ -9,8 +9,6 @@
 
 #include "fake_registry.h"
 
-#include "gui/functions.h"
-#include "gui/gui.h"
 #include "user_config.h"
 
 #include <stdio.h>
@@ -60,6 +58,7 @@ static BOOL GetFakeRegistryItem(const char *key_ptr, char **value_ptr);
 /* Initialize the fake registry.
  */
 void InitializeFakeRegistry(void) {
+  return;
   /* There must be a better way of doing this:
    */
   char row[10 * 1024], key[10 * 1024], value[10 * 1024];
@@ -251,6 +250,7 @@ static BOOL GetFakeRegistryItem(const char *key_ptr, char **value_ptr) {
 }
 
 static BOOL SetFakeRegistryItem(const char *key_ptr, const char *value_ptr) {
+  return 0;
   FakeRegistry *ptr = reg_head_ptr;
   char *new_value_ptr;
   char *new_key_ptr;

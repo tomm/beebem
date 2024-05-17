@@ -33,7 +33,6 @@
 #include "user_config.h"
 
 #include "beebem.h"
-#include "gui/gui.h"
 
 #include <stdio.h>
 #include <stdlib.h>

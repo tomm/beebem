@@ -25,10 +25,9 @@
 
 #include "beebem_sdl.h"
 
-#include "beebem_pages.h"
 #include "beebwin.h"
-#include "gui/line.h"
-#include "gui/log.h"
+#include "line.h"
+#include "log.h"
 #include "main.h" // Remove this once command line stuff fixed
 #include "types.h"
 
@@ -495,28 +494,28 @@ int Create_Screen(void) {
     case RESOLUTION_640X480_V:
       width = 640;
       height = 480;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
     case RESOLUTION_320X240_S:
     case RESOLUTION_320X240_V:
       width = 320;
       height = 240;
-      EG_Draw_SetToLowResolution();
+      //EG_Draw_SetToLowResolution();
       break;
     case RESOLUTION_320X256:
       width = 320;
       height = 256;
-      EG_Draw_SetToLowResolution();
+      //EG_Draw_SetToLowResolution();
       break;
     case RESOLUTION_640X512:
       width = 640;
       height = 512;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
     default:
       width = 640;
       height = 480;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
     }
   } else {
@@ -525,29 +524,29 @@ int Create_Screen(void) {
     case RESOLUTION_640X480_V:
       width = 640;
       height = 480;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
     case RESOLUTION_320X240_S:
     case RESOLUTION_320X240_V:
       width = 320;
       height = 240;
-      EG_Draw_SetToLowResolution();
+      //EG_Draw_SetToLowResolution();
       break;
     case RESOLUTION_320X256:
       width = 320;
       height = 256;
-      EG_Draw_SetToLowResolution();
+      //EG_Draw_SetToLowResolution();
       break;
     case RESOLUTION_640X512:
       width = 640;
       height = 512;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
 
     default:
       width = 640;
       height = 512;
-      EG_Draw_SetToHighResolution();
+      //EG_Draw_SetToHighResolution();
       break;
     }
   }
@@ -572,7 +571,7 @@ int Create_Screen(void) {
 
   /* Update GUI pointers to screen surface.
    */
-  ClearWindowsBackgroundCacheAndResetSurface();
+  //ClearWindowsBackgroundCacheAndResetSurface();
 
   // printf("3: SDL_SetVideoMode called\n");
 
@@ -1190,6 +1189,7 @@ SDL_WINDOW_WIDTH, 1); SDL_UpdateRect(screen_ptr, 0, window_y+1 , screen_ptr->w,
 */
 
 void RenderFullscreenFPS(const char *str, int y) {
+#if 0
   SDL_Color col = {127 + 64, 127 + 64, 127 + 64, 0};
   SDL_Rect rect = {0, 0, 7 * 10, 16};
 
@@ -1203,6 +1203,7 @@ void RenderFullscreenFPS(const char *str, int y) {
   SDL_FillRect(video_output, &rect,
                SDL_MapRGB(video_output->format, col.r, col.g, col.b));
   EG_Draw_String(video_output, &col, EG_FALSE, &rect, 0, (char *)str);
+#endif
 }
 
 void SetWindowTitle(char *title) { SDL_WM_SetCaption(title, NULL); }

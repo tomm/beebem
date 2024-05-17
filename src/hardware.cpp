@@ -5,7 +5,7 @@
 
 #include "hardware.h"
 
-#include "gui/log.h"
+#include "log.h"
 #include "windows.h"
 
 /* Callbacks:

@@ -6,7 +6,6 @@
 #endif
 
 
-#include "gui/sdl.h"
 #include "types.h"
 
 #include <SDL.h>

@@ -29,9 +29,6 @@ endif()
 
 find_package(SDL REQUIRED)
 
-find_package(GTK2 REQUIRED)
-message(STATUS "found GTK2 version ${GTK2_VERSION}")
-
 add_subdirectory(src)
 add_subdirectory(data)
 add_subdirectory(doc)

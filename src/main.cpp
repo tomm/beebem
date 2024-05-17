@@ -27,7 +27,6 @@
 
 #include "6502core.h"
 #include "atodconv.h"
-#include "beebem_pages.h"
 #include "beebmem.h"
 #include "beebsound.h"
 #include "beebwin.h"
@@ -35,11 +34,9 @@
 #include "disc8271.h"
 #include "econet.h" //Rob
 #include "fake_registry.h"
-#include "gui/gui.h"
-#include "gui/line.h" // SDL Stuff
-#include "gui/log.h"
 #include "i86.h"
 #include "sasi.h"
+#include "log.h"
 #include "scsi.h" // Dave: Needed for reset on break
 #include "beebem_sdl.h"
 #include "serial.h"
@@ -112,7 +109,6 @@ FILE *tlog;
 int done = 0;
 /////////////////////////////////int fullscreen = 0;
 int showing_menu = 0;
-EG_Window *displayed_window_ptr = NULL;
 
 // void CLEAN_EXIT(void)
 //{
@@ -120,10 +116,6 @@ EG_Window *displayed_window_ptr = NULL;
 //    */
 //   SDL_Quit();
 // }
-
-void SetActiveWindow(EG_Window *window_ptr) {
-  displayed_window_ptr = window_ptr;
-}
 
 int GetFullscreenState(void) {
   bool fullscreen_val = false;
@@ -145,7 +137,6 @@ int ToggleFullscreen(void) {
     mainWin->SetFullScreenToggle(false);
   else
     mainWin->SetFullScreenToggle(true);
-  SetFullScreenTickbox(mainWin->IsFullScreen());
 
   Destroy_Screen();
   if (Create_Screen() != 1) {
@@ -156,7 +147,6 @@ int ToggleFullscreen(void) {
   /* Update GUI here so it's not missed anywhere - this is
    * turning into such a bloody MESS...
    */
-  ClearWindowsBackgroundCacheAndResetSurface();
   ClearVideoWindow();
 
   //	if (SDL_WM_ToggleFullScreen(screen_ptr) != 1)
@@ -205,7 +195,7 @@ int main(int argc, char *argv[]) {
 
   //+>
   int X11_CapsLock_Down;
-  Uint32 ticks = SDL_GetTicks();
+  //Uint32 ticks = SDL_GetTicks();
   //	int mouse_x=0, mouse_y=0, mouse_move_x, mouse_move_y;
   //	BOOL ignore_next_mouse_movement = FALSE;
   //	int buttons=0;
@@ -228,20 +218,6 @@ int main(int argc, char *argv[]) {
     qFATAL("Unable to initialise SDL library!");
     exit(1);
   }
-
-  /* Initialize GUI API
-   */
-  if (EG_Initialize() == EG_TRUE) {
-    qINFO("EG initialized.");
-  } else {
-    qFATAL("EG failed to initialize! Quiting.");
-    exit(1);
-  }
-
-  /* Build menus:
-   */
-  if (InitializeBeebEmGUI(screen_ptr) != EG_TRUE)
-    exit(1);
 
   /* Initialize fake windows registry:
    */
@@ -271,7 +247,7 @@ int main(int argc, char *argv[]) {
 
   /* Clear SDL event queue
    */
-  EG_Draw_FlushEventQueue();
+  //EG_Draw_FlushEventQueue();
 
   /* Main loop converted to SDL:
    */
@@ -336,8 +312,8 @@ int main(int argc, char *argv[]) {
        * (Delay is set in the menu event code below)
        */
       if (mainWin->CursorShouldBeHidden() &&
-          SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE &&
-          EG_Draw_CalcTimePassed(ticks, SDL_GetTicks()) >= 2500)
+          SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE /*&&
+          EG_Draw_CalcTimePassed(ticks, SDL_GetTicks()) >= 2500*/)
         SDL_ShowCursor(SDL_DISABLE);
 
       while (SDL_PollEvent(&event))
@@ -422,11 +398,12 @@ int main(int argc, char *argv[]) {
           // int pressed=0;
           int col = 0, row = 0;
 
+          /*
           if (event.key.keysym.sym == SDLK_F12 ||
               event.key.keysym.sym == SDLK_F11 ||
               event.key.keysym.sym == SDLK_MENU) {
             Show_Main();
-          }
+          }*/
 
           // pressed =
           col = row = 0;
@@ -537,16 +514,16 @@ int main(int argc, char *argv[]) {
 
         /* Send event to GUI:
          */
-        EG_Window_ProcessEvent(displayed_window_ptr, &event, 0, 0);
+        //EG_Window_ProcessEvent(displayed_window_ptr, &event, 0, 0);
       }
 
       //			printf("Menu mode.\n");
       SDL_Delay(10);
-      EG_Window_ProcessEvent(displayed_window_ptr, NULL, 0, 0);
+      //EG_Window_ProcessEvent(displayed_window_ptr, NULL, 0, 0);
 
       /* Record time so we can hide the mouse cursor after a small delay.
        */
-      ticks = SDL_GetTicks();
+      //ticks = SDL_GetTicks();
     }
 
     //	printf("%d\n", AMXButtons);
@@ -574,7 +551,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   DestroyFakeRegistry();
-  DestroyBeebEmGUI();
+  //DestroyBeebEmGUI();
   UninitialiseSDL();
   Log_UnInit();
 

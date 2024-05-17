@@ -1,8 +1,5 @@
-add_subdirectory(gui)
-
-
-add_executable(beebem main.cpp beebem_sdl.cpp windows.cpp beebem_pages.cpp
-  beebem_pages_disks.cpp beebem_pages_disks.h beebem_pages.h fake_registry.c
+add_executable(beebem main.cpp line.h log.c log.h beebem_sdl.cpp windows.cpp 
+  fake_registry.c
   fake_registry.h user_config.c user_config.h serialdevices.cpp serialdevices.h
   csw.cpp csw.h 6502core.cpp atodconv.cpp avi.cpp beebmem.cpp beebsound.cpp
   beebwin.cpp cregistry.cpp debug.cpp disc1770.cpp disc8271.cpp econet.cpp
@@ -19,13 +16,12 @@ add_executable(beebem main.cpp beebem_sdl.cpp windows.cpp beebem_pages.cpp
 target_include_directories(beebem PRIVATE ${CMAKE_BINARY_DIR})
 target_include_directories(beebem PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(beebem PRIVATE ${SDL_INCLUDE_DIRS})
-target_include_directories(beebem PRIVATE ${GTK2_INCLUDE_DIRS})
-target_link_libraries(beebem eg ${SDL_LIBRARIES} ${GTK2_LIBRARIES})
+target_link_libraries(beebem ${SDL_LIBRARIES})
 if (ZLIB_FOUND)
   target_include_directories(beebem PRIVATE ${ZLIB_INCLUDE_DIRS})
   target_link_libraries(beebem ${ZLIB_LIBRARIES})
 endif()
-target_compile_options(beebem PRIVATE -Wall -Werror
+target_compile_options(beebem PRIVATE -Wall
   -Wno-deprecated-declarations -Wno-format-security -Wno-unused-result)
 
 install(TARGETS beebem)

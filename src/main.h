@@ -31,8 +31,6 @@
 #endif
 
 #include "beebwin.h"
-#include "gui/functions.h"
-#include "gui/gui.h"
 #include "beebem_sdl.h"
 #include "windows.h"
 
@@ -58,7 +56,6 @@ void WriteLog(char *fmt, ...);
 extern int trace_186;
 
 void Quit(void);
-void SetActiveWindow(EG_Window *window_ptr);
 int GetFullscreenState(void);
 int ToggleFullscreen(void);
 void ShowingMenu(void);

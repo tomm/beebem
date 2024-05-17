@@ -2,12 +2,19 @@
 #include "config.h"
 #endif
 
+#include <SDL.h>
 #include "windows.h"
 
-#include "beebem_pages.h"
 #include "fake_registry.h"
-#include "gui/gui.h"
-#include "gui/log.h"
+#include "log.h"
+
+// random crap dumped here
+extern "C" void *EG_Malloc(size_t size) {
+  return malloc(size);
+}
+extern "C" void EG_Free(void *ptr) {
+  free(ptr);
+}
 
 /* Fake windows stuff:
  */
@@ -17,6 +24,7 @@
 int MessageBox(HWND hwnd, const char *message_p, const char *title_p,
                int type) {
   int ret = 1, selected, icon_type = 0;
+#if 0
   // HWND tmp_hwnd;
 
   // tmp_hwnd = hwnd;
@@ -110,6 +118,7 @@ int MessageBox(HWND hwnd, const char *message_p, const char *title_p,
     break;
   }
 
+#endif
   return ret;
 }
 
@@ -123,6 +132,7 @@ DWORD GetTickCount(void) { return (SDL_GetTicks()); }
 
 BOOL ModifyMenu(HMENU hMnu, UINT uPosition, UINT uFlags, PTR uIDNewItem,
                 LPCTSTR lpNewItem) {
+#if 0
   int v;
 
   // Only supports changing the title.
@@ -142,6 +152,7 @@ BOOL ModifyMenu(HMENU hMnu, UINT uPosition, UINT uFlags, PTR uIDNewItem,
   if (v == EG_TRUE)
     return 1;
   else
+#endif
     return 0;
 }
 
@@ -150,7 +161,7 @@ UINT GetMenuState(HMENU hMenu, UINT uId, UINT uFlags) {
 
   //	printf("GetMenuState\n");
 
-  v = GetGUIOption(uId);
+  v = 0;//GetGUIOption(uId);
 
   if (v == EG_TRUE)
     v = MF_CHECKED;
@@ -207,10 +218,13 @@ UINT GetMenuState(HMENU hMenu, UINT uId, UINT uFlags) {
 DWORD CheckMenuItem(HMENU hmenu, UINT uIDCheckItem, UINT uCheck) {
   // printf("Asked to set %d to %d\n", uIDCheckItem, uCheck);
 
+  return 0;
+  /*
   if (uCheck == MF_CHECKED)
     return (UpdateGUIOption(uIDCheckItem, 1));
   else
     return (UpdateGUIOption(uIDCheckItem, 0));
+    */
 }
 
 BOOL MoveFileEx(LPCTSTR lpExistingFileName, LPCTSTR lpNewFileName,

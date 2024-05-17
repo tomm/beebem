@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "gui/log.h"
+#include "log.h"
 
 #include <errno.h>
 #include <stdarg.h>

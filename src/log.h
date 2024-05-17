@@ -5,8 +5,7 @@
 #include "config.h"
 #endif
 
-#include "gui/line.h"
-
+#include "line.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

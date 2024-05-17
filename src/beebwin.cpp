@@ -32,7 +32,6 @@
 #include "6502core.h"
 #include "atodconv.h"
 #include "avi.h"
-#include "beebem_pages.h"
 #include "beebemrc.h"
 #include "beebmem.h"
 #include "beebsound.h"
@@ -948,6 +947,7 @@ void BeebWin::TrackPopupMenu(int x, int y) {
 
 /****************************************************************************/
 void BeebWin::InitMenu(void) {
+#if 0
   char menu_string[256];
   HMENU hMenu = m_hMenu;
 
@@ -1089,6 +1089,7 @@ void BeebWin::InitMenu(void) {
   SetRomMenu();
 
   SetSoundMenu();
+#endif
 }
 
 void BeebWin::UpdateMonitorMenu() {
@@ -2654,7 +2655,7 @@ void BeebWin::SetImageName(char *DiscName, char Drive, char DType) {
   DiscLoaded[(int)Drive] = TRUE;
 
   // in beebem_pages.cpp sets the eject button label.
-  SetNameForDisc(Drive, CDiscName[(int)Drive]);
+  //SetNameForDisc(Drive, CDiscName[(int)Drive]);
   //<-
 }
 
@@ -2684,12 +2685,13 @@ void BeebWin::EjectDiscImage(int Drive) {
   }
 
   //+>
-  SetNameForDisc(Drive, CDiscName[Drive]);
+  //SetNameForDisc(Drive, CDiscName[Drive]);
   //<+
 }
 
 /****************************************************************************/
 int BeebWin::ReadDisc(int Drive, HMENU dmenu) {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //->	char FileName[256];
   //++
@@ -2832,10 +2834,13 @@ int BeebWin::ReadDisc(int Drive, HMENU dmenu) {
   }
 
   return (gotName);
+#endif
+  return 0;
 }
 
 /****************************************************************************/
 void BeebWin::LoadTape(void) {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //--	char FileName[256];
 
@@ -2903,9 +2908,11 @@ void BeebWin::LoadTape(void) {
     if (strstr(FileName, ".csw"))
       LoadCSW(FileName);
   }
+#endif
 }
 
 void BeebWin::NewTapeImage(char *FileName) {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //--	OPENFILENAME ofn;
   //--
@@ -3006,6 +3013,7 @@ void BeebWin::NewTapeImage(char *FileName) {
    */
 
   //<+
+#endif
 }
 
 /*******************************************************************/
@@ -3051,6 +3059,7 @@ void BeebWin::SelectFDC(void) {
 
 /****************************************************************************/
 void BeebWin::NewDiscImage(int Drive) {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //--	char FileName[256];
   //++
@@ -3208,10 +3217,12 @@ void BeebWin::NewDiscImage(int Drive) {
     DiscLoaded[Drive] = TRUE;
     strcpy(CDiscName[1], FileName);
   }
+#endif
 }
 
 /****************************************************************************/
 void BeebWin::SaveState() {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //->	char FileName[260];
   //++
@@ -3271,10 +3282,12 @@ void BeebWin::SaveState() {
     }
     SaveUEFState(FileName);
   }
+#endif
 }
 
 /****************************************************************************/
 void BeebWin::RestoreState() {
+#if 0
   //--	char DefaultPath[_MAX_PATH];
   //->	char FileName[256];
   //++
@@ -3322,6 +3335,7 @@ void BeebWin::RestoreState() {
     //--
     LoadUEFState(FileName);
   }
+#endif
 }
 
 /****************************************************************************/
