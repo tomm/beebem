@@ -10,6 +10,7 @@
 
 #include <SDL.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define BEEBEM_VIDEO_CORE_SCREEN_WIDTH 800
 #define BEEBEM_VIDEO_CORE_SCREEN_HEIGHT 600
@@ -27,9 +28,6 @@
     if (SDL_MUSTLOCK(s))                                                       \
       (void)SDL_UnlockSurface(s);                                              \
   }
-
-extern SDL_Surface *video_output;
-extern SDL_Surface *screen_ptr;
 
 /* Global configuration options:
  */
@@ -62,6 +60,7 @@ extern int cfg_Windowed_Resolution;
 extern int cfg_Fullscreen_Resolution;
 
 extern int cfg_VerticalOffset;
+extern bool maintain_4_3_aspect;
 
 /* Timing:
  *
@@ -89,7 +88,7 @@ extern void RenderLine(int, int, int);
 extern void SaferSleep(unsigned int);
 extern unsigned char *GetSDLScreenLinePtr(int);
 extern void SetWindowTitle(char *);
-extern int ConvertSDLKeyToBBCKey(SDL_keysym, int *, /* int*, */ int *);
+extern int ConvertSDLKeyToBBCKey(SDL_Keysym, int *, /* int*, */ int *);
 extern void SetBeebEmEmulatorCoresPalette(unsigned char *, int);
 
 extern void AddBytesToSDLSoundBuffer(void *, int);

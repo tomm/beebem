@@ -15,8 +15,8 @@ add_executable(beebem main.cpp line.h log.c log.h beebem_sdl.cpp windows.cpp
 
 target_include_directories(beebem PRIVATE ${CMAKE_BINARY_DIR})
 target_include_directories(beebem PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_include_directories(beebem PRIVATE ${SDL_INCLUDE_DIRS})
-target_link_libraries(beebem ${SDL_LIBRARIES})
+target_include_directories(beebem PRIVATE /usr/include/SDL2)
+target_link_libraries(beebem SDL2)
 if (ZLIB_FOUND)
   target_include_directories(beebem PRIVATE ${ZLIB_INCLUDE_DIRS})
   target_link_libraries(beebem ${ZLIB_LIBRARIES})

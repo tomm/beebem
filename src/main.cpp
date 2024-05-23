@@ -415,9 +415,24 @@ int main(int argc, char *argv[]) {
             BeebKeyUp(0, 0);
           }
 
-          /* Convert SDL key press into BBC key press:
-           */
-          if (ConvertSDLKeyToBBCKey(event.key.keysym /*, &pressed */, &col,
+          bool skip_key = false;
+
+          // emulation special functions
+          if (event.key.keysym.mod & KMOD_RCTRL) {
+            skip_key = true;
+            if (event.type == SDL_KEYDOWN) {
+              if (event.key.keysym.sym == SDLK_q) {
+                skip_key = true;
+                done = 1;
+              }
+              if (event.key.keysym.sym == SDLK_s) {
+                skip_key = true;
+                maintain_4_3_aspect = !maintain_4_3_aspect;
+              }
+            }
+          }
+          /* Convert SDL key press into BBC key press: */
+          if (!skip_key && ConvertSDLKeyToBBCKey(event.key.keysym /*, &pressed */, &col,
                                     &row)) {
 
             /* If X11 and Caps Lock then release automatically after 20

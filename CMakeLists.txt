@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 project(beebem VERSION 0.0.13)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(BEEBEM_WITH_DEBUGGER "compile with additional logging" OFF)
 option(BEEBEM_ENABLE_ECONET "compile with econet" ON)
 option(BEEBEM_DISABLE_REALTIME_SLIDER "compile without realtime slider on slide bar" ON)
@@ -26,8 +28,6 @@ set(HAVE_LIBZ ZLIB_FOUND)
 if (ZLIB_FOUND)
   set(HAVE_ZLIB_H 1)
 endif()
-
-find_package(SDL REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(data)
