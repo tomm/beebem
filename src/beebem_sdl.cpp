@@ -35,24 +35,8 @@
 
 #include <string.h>
 
-// The SDL sound support code is nasty :-(
-//
-// In order to handle sound without studying the BeebEm sound code in too much
-// detail, I'll (for now) just let it dump it's samples into this bloody huge
-// buffer instead..  The buffer is wrapped so once 1024*100 bytes are used
-// we index from 0 again.
-#define SOUND_BUFFER_SIZE (1024 * 100)
-Uint8 SDLSoundBuffer[SOUND_BUFFER_SIZE];
-
-// Offset within sound buffer for adding sound to the buffer:
-unsigned long SDLSoundBufferOffset_IN;
-
-// Offset within sound buffer for reading sound from the buffer:
-unsigned long SDLSoundBufferOffset_OUT;
-
-// Number of bytes left in the buffer.  I.e.: the amount we've yet to read
-// (or dump if sound latency becomes too high):
-unsigned long SDLSoundBufferBytesHave;
+static int audioDeviceId;
+#define AUDIO_BUFFER_LEN 1024
 
 unsigned int ScalingTable[1024];
 
@@ -62,174 +46,18 @@ bool maintain_4_3_aspect = true;
 // */
 // static float scale = 1;
 
-// Number of samples we want SDL to work with each time.  The smaller the
-// number the lower the latency (I think):
-#define REQUESTED_NUMBER_OF_SAMPLES 1024
-//#define REQUESTED_NUMBER_OF_SAMPLES 128
-
-// The actual number of samples per time SDL will want (SDL returns this after
-// we submit our request for a sound stream):
-int samples;
-
-// Sigh, look what I've reduced myself to..  The sound support here is truly
-// shocking.. Please feel free to rewrite it for me..
-void InitializeSoundBuffer(void) {
-  SDLSoundBufferOffset_IN = 0;
-  SDLSoundBufferOffset_OUT = 0;
-  SDLSoundBufferBytesHave = 0;
-
-  int i;
-  for (i = 0; i < SOUND_BUFFER_SIZE; i++)
-    SDLSoundBuffer[i] = (Uint8)0;
-}
 
 // When the user switches to the menu, use it as an excuse to flush the buffer.
-void FlushSoundBuffer(void) { InitializeSoundBuffer(); }
+void FlushSoundBuffer(void) { }
 
 // The BeebEm emulator core (the Windows code) calls this when it wants to
 // play some samples.  We place those samples in our bloody huge buffer
 // instead.
 void AddBytesToSDLSoundBuffer(void *p, int len) {
-  int i;
-  Uint8 *pp;
-  pp = (Uint8 *)p;
-
-  // printf("ADDED %d BYTES\n %d %d %d", len, (int) pp[0], (int) pp[1], (int)
-  // pp[2]);
-
-  for (i = 0; i < len; i++) {
-    SDLSoundBuffer[SDLSoundBufferOffset_IN] = *(pp++);
-
-    SDLSoundBufferOffset_IN++;
-    if (SDLSoundBufferOffset_IN >= SOUND_BUFFER_SIZE)
-      SDLSoundBufferOffset_IN = (unsigned long)0;
-  }
-  SDLSoundBufferBytesHave += len;
-}
-
-// Returns a sequential buffer containing the next
-// block of sound for SDL to play.
-//
-// Due to the wrap effect of the bloody huge buffer above, I need to copy
-// the samples SDL will one into a sequencial list..
-Uint8 SequentialSDLSoundBuffer[10 * 1024]; // I'm assuming SDL wont want 10k..
-
-// Get pointer to above array..
-Uint8 *GetSoundBufferPtr(void) { return SequentialSDLSoundBuffer; }
-
-// Removes 'len' bytes from the bloody huge wrapped sound buffer and places it
-// into the sequencial list above..  If there are less than 'len' samples
-// available, it copies what's available into the sequencial buffer and returns
-// the actual amount it managed to copy.  So you need to check the return
-// value.
-int GetBytesFromSDLSoundBuffer(int len) {
-  static unsigned int uiCatchedUpTimes = 0;
-  int i;
-  Uint8 *p;
-
-  // check for under sampling (len > SDLSoundBufferBytesHave)
-  // (this needs to be communicated back to the caller as the return
-  //  value).
-  if ((unsigned long)len > SDLSoundBufferBytesHave)
-    len = SDLSoundBufferBytesHave;
-
-  p = SequentialSDLSoundBuffer;
-
-  for (i = 0; i < len; i++) {
-    *(p++) = SDLSoundBuffer[SDLSoundBufferOffset_OUT];
-
-    SDLSoundBufferOffset_OUT++;
-    if (SDLSoundBufferOffset_OUT >= SOUND_BUFFER_SIZE)
-      SDLSoundBufferOffset_OUT = (unsigned long)0;
-  }
-
-  SDLSoundBufferBytesHave -= len;
-
-  //#ifdef WANT_LOW_LATENCY_SOUND
-  if (cfg_WantLowLatencySound) {
-    // I really need to catchup if SDLSoundBufferBytesHave becomes too large
-    // otherwise the sound will lag more and more behind the action..
-    //
-    // Things shouldn't be getting out of sync as everything is timed to
-    // the systems clock..  But it is..
-    //
-    // Ok, so, if we have more than five blocks that SDL will want soon left
-    // in the sound buffer, lets catch-up by dumping some sound.
-    // Hopefully when some other task slows down beebem the sound will
-    // crackle but action sound effects will remain in sync.
-    //
-    // I'll make this optional in the final version so users can either
-    // have good but high latency sound, or maybe crap but low latency
-    // sound..
-    //
-    // I could also make sure that if the user switches to the Hatari GUI
-    // menu I use it as an excuse to dump everything in the sound buffer.
-    if (SDLSoundBufferBytesHave > ((unsigned long)samples * 5)) {
-      pDEBUG(dL "Dumping some sound samples, catched up %u times so far..", dR,
-             ++uiCatchedUpTimes);
-
-      //			// we dump everything apart from two blocks
-      // overwise we're
-      //			// always living on a knife edge.. (i.e.: we're
-      // max'ed out
-      //			// all the time and have no spare resources to
-      // fall back on. 			while (SDLSoundBufferBytesHave > (
-      // (unsigned long)samples
-      //* 2)){ 				SDLSoundBufferOffset_OUT++;
-      // if (SDLSoundBufferOffset_OUT >= SOUND_BUFFER_SIZE)
-      // SDLSoundBufferOffset_OUT = (unsigned long) 0;
-      //				SDLSoundBufferBytesHave--;
-      //			}
-      CatchupSound();
-    }
-  }
-  //#endif
-
-  return len;
-}
-
-void CatchupSound(void) {
-  // we dump everything apart from two blocks overwise we're
-  // always living on a knife edge.. (i.e.: we're max'ed out
-  // all the time and have no spare resources to fall back on.
-  while (SDLSoundBufferBytesHave > ((unsigned long)samples * 2)) {
-    SDLSoundBufferOffset_OUT++;
-    if (SDLSoundBufferOffset_OUT >= SOUND_BUFFER_SIZE)
-      SDLSoundBufferOffset_OUT = (unsigned long)0;
-    SDLSoundBufferBytesHave--;
+  if (SDL_QueueAudio(audioDeviceId, p, len) != 0) {
+    printf("error queueing audio: %s\n", SDL_GetError());
   }
 }
-
-// Guess what this does.
-unsigned long HowManyBytesLeftInSDLSoundBuffer(void) {
-  return SDLSoundBufferBytesHave;
-}
-
-/*
-#define SOUNDFILESIZE 9135855
-#define SOUNDFILENAME "./pugwash.dbg"
-unsigned char audiobuf[SOUNDFILESIZE];
-
-void loadsound(void)
-{
-        FILE *f;
-        f = fopen(SOUNDFILENAME, "rb");
-        if (f==NULL){
-                printf("Can't open file\n");
-                exit(1);
-        }else{
-                fread(audiobuf, 1, SOUNDFILESIZE, f);
-        }
-        fclose(f);
-}
-
-//Uint8 *audio_chunk;
-//Uint32 audio_len;
-//Uint8 *audio_pos;
-
-
-
-*/
 
 /* Globals:
  *	-	-	-	-	-	-	-
@@ -289,65 +117,23 @@ int cfg_WaitType = OPT_SLEEP_OS;
 
 SDL_AudioSpec wanted;
 
-void fill_audio(void *udata, Uint8 *stream, int len) {
-  Uint8 *p;
-
-  // first clear the audio buffer (in case we are not
-  // playing the whole 'len' duration)
-  memset(stream, 0, len);
-
-  /* Only play if we have data left */
-  if (HowManyBytesLeftInSDLSoundBuffer() == 0)
-    return;
-  //	if ( audio_len == 0 )
-  //		return;
-
-  // We can only play upto one sample.  I'll fix this later..
-  //	len = ( len > samples ? samples : len );
-
-  //	// Add debuging sound to sound buffer.
-  //	AddBytesToSDLSoundBuffer(audio_pos, len);
-  //	audio_pos += len;
-  //	audio_len -= len;
-
-  if (len > (int)HowManyBytesLeftInSDLSoundBuffer())
-    len = HowManyBytesLeftInSDLSoundBuffer();
-
-  p = GetSoundBufferPtr();
-  len = GetBytesFromSDLSoundBuffer(len);
-  SDL_MixAudio(stream, p, len, SDL_MIX_MAXVOLUME);
-}
-
 int InitializeSDLSound(int soundfrequency) {
-  samples = REQUESTED_NUMBER_OF_SAMPLES;
-
-  // Offset within sound buffer.
-  SDLSoundBufferOffset_IN = 0;
-  SDLSoundBufferOffset_OUT = 0;
-  SDLSoundBufferBytesHave = 0;
-
   wanted.freq = soundfrequency;
   wanted.format = AUDIO_U8;
   wanted.channels = 1;
-  wanted.samples = samples; // 1024;
-  wanted.callback = fill_audio;
+  wanted.samples = AUDIO_BUFFER_LEN;
+  wanted.callback = NULL;
   wanted.userdata = NULL;
 
   /* Open the audio device, forcing the desired format */
-  if (SDL_OpenAudio(&wanted, NULL) < 0) {
+  audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &wanted, NULL, 0);
+  if (!audioDeviceId) {
     fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
     return (0);
   }
 
-  //	loadsound();
-  //      audio_chunk = (Uint8*) &audiobuf;
-  //      audio_pos = audio_chunk;
-  //      audio_len = SOUNDFILESIZE;
-
-  InitializeSoundBuffer();
-
-  SDL_PauseAudio(0);
-  SDL_Delay(500);
+  SDL_PauseAudioDevice(audioDeviceId, 0);
+  //SDL_Delay(500);
 
   return (1);
 }
@@ -481,144 +267,6 @@ int Create_Screen(void) {
     beeb_tex = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 800, 600);
     SDL_SetTextureScaleMode(beeb_tex, SDL_ScaleModeBest);
 
-#if 0
-  /* Initialize SDL applications window.
-   * NOTE: Both window and video_output surfaces are fixed to 8bit
-   * depth at the moment.  I'll work on fixing it later..
-   */
-  Uint32 flags, width, height;
-
-  //#define RESOLUTION_640X512	0
-  //#define RESOLUTION_640X480_S	1
-  //#define RESOLUTION_640X480_V	2
-  //#define RESOLUTION_320X240_S	3
-  //#define RESOLUTION_320X240_V	4
-  //#define RESOLUTION_320X256	5
-
-  // int     cfg_Resolution_Windowed = RESOLUTION_640X512;
-  // int	  cfg_Resolution_Fullscreened;
-
-  width = 640;
-  height = 512;
-
-  // printf("1: start\n");
-
-  // When running in fullscreen mode remember you can exit BeebEm by
-  flags = SDL_SWSURFACE /* | SDL_FULLSCREEN */;
-
-  /* Fullscreened:
-   */
-  //	if ( fullscreen==1) {
-  if (mainWin != NULL && mainWin->IsFullScreen()) {
-    flags |= SDL_FULLSCREEN;
-
-    switch (cfg_Fullscreen_Resolution) {
-    case RESOLUTION_640X480_S:
-    case RESOLUTION_640X480_V:
-      width = 640;
-      height = 480;
-      //EG_Draw_SetToHighResolution();
-      break;
-    case RESOLUTION_320X240_S:
-    case RESOLUTION_320X240_V:
-      width = 320;
-      height = 240;
-      //EG_Draw_SetToLowResolution();
-      break;
-    case RESOLUTION_320X256:
-      width = 320;
-      height = 256;
-      //EG_Draw_SetToLowResolution();
-      break;
-    case RESOLUTION_640X512:
-      width = 640;
-      height = 512;
-      //EG_Draw_SetToHighResolution();
-      break;
-    default:
-      width = 640;
-      height = 480;
-      //EG_Draw_SetToHighResolution();
-      break;
-    }
-  } else {
-    switch (cfg_Windowed_Resolution) {
-    case RESOLUTION_640X480_S:
-    case RESOLUTION_640X480_V:
-      width = 640;
-      height = 480;
-      //EG_Draw_SetToHighResolution();
-      break;
-    case RESOLUTION_320X240_S:
-    case RESOLUTION_320X240_V:
-      width = 320;
-      height = 240;
-      //EG_Draw_SetToLowResolution();
-      break;
-    case RESOLUTION_320X256:
-      width = 320;
-      height = 256;
-      //EG_Draw_SetToLowResolution();
-      break;
-    case RESOLUTION_640X512:
-      width = 640;
-      height = 512;
-      //EG_Draw_SetToHighResolution();
-      break;
-
-    default:
-      width = 640;
-      height = 512;
-      //EG_Draw_SetToHighResolution();
-      break;
-    }
-  }
-
-#ifdef WITH_FORCED_CM
-  flags |= SDL_HWPALETTE;
-#endif
-
-  // printf("2: flags set\n");
-
-  /* Make sure screen surface was free'd.
-   */
-  if (screen_ptr != NULL)
-    Destroy_Screen();
-
-  //      if ( (screen_ptr=SDL_SetVideoMode(SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT
-  if ((screen_ptr = SDL_SetVideoMode(width, height, 8, flags)) == NULL) {
-    fprintf(stderr, "Unable to set video mode: %s\n", SDL_GetError());
-
-    return false;
-  }
-
-  /* Update GUI pointers to screen surface.
-   */
-  //ClearWindowsBackgroundCacheAndResetSurface();
-
-  // printf("3: SDL_SetVideoMode called\n");
-
-  /* Give our new surface the same palette as the physical application
-   * window
-   */
-  //	if (screen_ptr->format->palette->ncolors > 256){
-  //		fprintf(stderr, "Trying to set 8bit bitmaps palette but have too
-  // many colors!\n"); 		return false;
-  //	}
-  //	SDL_SetColors(video_output, screen_ptr->format->palette->colors, 0
-  //	 , screen_ptr->format->palette->ncolors);
-
-  // DL_SetColors(SDL_Surface *surface, SDL_Color *colors, int firstcolor, int
-  // ncolors);
-
-  /*XXX
-  SDL_SetColors(screen_ptr, video_output->format->palette->colors, 0,
-                video_output->format->palette->ncolors - 1);
-                */
-
-  // printf("4: SDL_SetColors called\n");
-#endif /* 0 */
-
   ClearVideoWindow();
 
   // printf("5: ClearVideoWindow called - now returning with true\n");
@@ -634,8 +282,6 @@ void Destroy_Screen(void) {
 }
 
 int InitialiseSDL(int argc, char *argv[]) {
-  char video_hardware[1024];
-  Uint32 flags;
   // int tmp_argc;
   // char **tmp_argv;
 
@@ -644,7 +290,7 @@ int InitialiseSDL(int argc, char *argv[]) {
 
   /* Initialize SDL and handle failures.
    */
-  if (SDL_Init(SDL_INIT_VIDEO /* | SDL_INIT_AUDIO */) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO  | SDL_INIT_AUDIO ) < 0) {
     fprintf(stderr, "Unable to initialise SDL: %s\n", SDL_GetError());
     return false;
   }
@@ -679,7 +325,6 @@ int InitialiseSDL(int argc, char *argv[]) {
    * can draw on.  It's hardwired to an 800x600 8bit byte per pixel
    * bitmap.
    */
-  flags = SDL_SWSURFACE;
   video_output = new uint8_t[800*600];
   video24_output = new uint8_t[800*600*24];
 
