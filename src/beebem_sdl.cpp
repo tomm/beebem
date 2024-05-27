@@ -57,8 +57,8 @@ SDL_Surface *icon = NULL;
 
 // 800x600 bytes
 static uint8_t *video_output = NULL;
-// 800x600x3 bytes (24-bit)
-static uint8_t *video24_output = NULL;
+// 800x600x4 bytes (abgr)
+static uint32_t *video_rgba_output = NULL;
 static SDL_Window *sdl_window = NULL;
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* beeb_tex = NULL;
@@ -243,7 +243,7 @@ int Create_Screen(void) {
     SDL_ShowCursor(0);
 
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
-    beeb_tex = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 800, 600);
+    beeb_tex = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 800, 600);
     SDL_SetTextureScaleMode(beeb_tex, SDL_ScaleModeBest);
 
   ClearVideoWindow();
@@ -305,7 +305,7 @@ int InitialiseSDL(int argc, char *argv[]) {
    * bitmap.
    */
   video_output = new uint8_t[800*600];
-  video24_output = new uint8_t[800*600*24];
+  video_rgba_output = new uint32_t[800*600];
 
   // Create the default screen.
   int r = Create_Screen();
@@ -334,7 +334,7 @@ void UninitialiseSDL(void) {
   SDL_CloseAudio();
   SDL_ShowCursor(SDL_ENABLE);
   delete[] video_output;
-  delete[] video24_output;
+  delete[] video_rgba_output;
 }
 
 /* Timing:
@@ -478,33 +478,49 @@ void ClearVideoWindow(void) {
   SDL_RenderPresent(sdl_renderer);
 }
 
-void RenderLine(int line, int isTeletext, int xoffset) {
-  if (line == 32) {
-    for (int i=0; i<800*600; i++) {
-      uint8_t p = video_output[i];
-      video24_output[3*i + 0] = p & 1 ? 255 : 0;
-      video24_output[3*i + 1] = p & 2 ? 255 : 0;
-      video24_output[3*i + 2] = p & 4 ? 255 : 0;
-    }
-    // if line is zero do a buffer flip
-    SDL_UpdateTexture(beeb_tex, NULL, video24_output, 800*3);
-    // grey background on screen borders
-    //SDL_SetRenderDrawColor(sdl_renderer, 15, 15, 15, 0);
-    SDL_RenderClear(sdl_renderer);
+static const uint32_t beeb_palette[8] = {
+  0,
+  0xff,
+  0xff00,
+  0xffff,
+  0xff0000,
+  0xff00ff,
+  0xffff00,
+  0xffffff
+};
 
+void RenderLine(int line, int isTeletext, int xoffset) {
+  const SDL_Rect srcrect = { 0, isTeletext ? 0 : 32, 640, isTeletext ? 500 : 258 };
+
+  // if vblank time, update screen
+  if ((isTeletext && line == 499) || (!isTeletext && line == 287)) {
     int wx, wy;
     SDL_GetRendererOutputSize(sdl_renderer, &wx, &wy);
-    SDL_Rect srcrect = { 0, isTeletext ? 0 : 32, 640, isTeletext ? 500 : 258 };
-    SDL_Rect dstrect;
+
     // enforce 4:3 screen aspect ratio
-    const int ASPECT_X = 4, ASPECT_Y = 3;
+    const int ASPECT_X = 4, ASPECT_Y = 3, BORDER = 0;
+    wx -= 2*BORDER;
+    wy -= 2*BORDER;
+
+    SDL_Rect dstrect;
     if (!maintain_4_3_aspect) {
-      dstrect = SDL_Rect { 0, 0, wx, wy };
+      dstrect = SDL_Rect { BORDER, BORDER, wx, wy };
     } else if (wx > ASPECT_X * wy / ASPECT_Y) {
-        dstrect = SDL_Rect { ((wx - ASPECT_X * wy / ASPECT_Y) >> 1), 0, ASPECT_X * wy / ASPECT_Y, wy };
+        dstrect = SDL_Rect { BORDER + ((wx - ASPECT_X * wy / ASPECT_Y) >> 1), BORDER, ASPECT_X * wy / ASPECT_Y, wy };
     } else {
-        dstrect = SDL_Rect { 0, ((wy - ASPECT_Y * wx / ASPECT_X) >> 1), wx, ASPECT_Y * wx / ASPECT_X };
+        dstrect = SDL_Rect { BORDER, BORDER + ((wy - ASPECT_Y * wx / ASPECT_X) >> 1), wx, ASPECT_Y * wx / ASPECT_X };
     }
+
+    // convert paletted screen to rgba texture (but only active parts of screen)
+    for (int y=0; y<srcrect.y+srcrect.h+1; y++) {
+      const int line = y*800;
+      for (int x=srcrect.x; x<srcrect.x+srcrect.w; x++) {
+        const int pixel = line+x;
+        video_rgba_output[pixel] = beeb_palette[video_output[pixel] & 7];
+      }
+    }
+    SDL_UpdateTexture(beeb_tex, NULL, video_rgba_output, 800*4);
+    SDL_RenderClear(sdl_renderer);
     SDL_RenderCopy(sdl_renderer, beeb_tex, &srcrect, &dstrect);
     SDL_RenderPresent(sdl_renderer);
   }
