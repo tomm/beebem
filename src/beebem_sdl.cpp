@@ -489,7 +489,7 @@ void RenderLine(int line, int isTeletext, int xoffset) {
     // if line is zero do a buffer flip
     SDL_UpdateTexture(beeb_tex, NULL, video24_output, 800*3);
     // grey background on screen borders
-    SDL_SetRenderDrawColor(sdl_renderer, 15, 15, 15, 0);
+    //SDL_SetRenderDrawColor(sdl_renderer, 15, 15, 15, 0);
     SDL_RenderClear(sdl_renderer);
 
     int wx, wy;

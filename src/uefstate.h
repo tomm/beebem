@@ -12,5 +12,5 @@ void fput16(unsigned int word16, FILE *fileptr);
 unsigned int fget32(FILE *fileptr);
 unsigned int fget16(FILE *fileptr);
 void SaveUEFState(char *StateName);
-void LoadUEFState(char *StateName);
+void LoadUEFState(const char *StateName);
 #endif

@@ -105,7 +105,7 @@ int uef_create(char *name) {
   return (1);
 }
 
-int uef_open(char *name) {
+int uef_open(const char *name) {
   gzFile uef_file;
   char UEFId[10];
   // int ver;
@@ -131,7 +131,8 @@ int uef_open(char *name) {
     return (0);
   }
 
-  // ver = gzget16(uef_file);
+  // read (and ignore) version number
+  gzget16(uef_file);
 
   uef_chunks = 0;
   uef_chunk = (uef_chunk_info *)malloc(sizeof(uef_chunk_info));

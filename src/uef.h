@@ -44,7 +44,7 @@ extern "C" void uef_setunlock(int unlock);
 extern "C" int uef_getdata(int time);
 
 /* open & close */
-extern "C" int uef_open(char *name);
+extern "C" int uef_open(const char *name);
 extern "C" void uef_close(void);
 
 /* writing */

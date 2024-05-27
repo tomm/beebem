@@ -429,6 +429,11 @@ int main(int argc, char *argv[]) {
                 skip_key = true;
                 maintain_4_3_aspect = !maintain_4_3_aspect;
               }
+              /*
+              if (event.key.keysym.sym == SDLK_t) {
+                LoadUEF("Test.uef");
+              }
+              */
             }
           }
           /* Convert SDL key press into BBC key press: */

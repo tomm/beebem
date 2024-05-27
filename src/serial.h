@@ -21,7 +21,7 @@ extern unsigned char SerialPort;
 void Serial_Poll(void);
 void InitSerialPort(void);
 void Kill_Serial(void);
-void LoadUEF(char *UEFName);
+void LoadUEF(const char *UEFName);
 void RewindTape(void);
 extern int TapeClockSpeed;
 extern void SerialThread(void *lpParam);

@@ -85,7 +85,7 @@ void SaveUEFState(char *StateName) {
   }
 }
 
-void LoadUEFState(char *StateName) {
+void LoadUEFState(const char *StateName) {
   char errmsg[256];
   char UEFId[10];
   //--	int CompletionBits=0; // These bits should be filled in

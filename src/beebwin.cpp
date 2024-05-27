@@ -5960,7 +5960,8 @@ void BeebWin::HandleCommandLineFile() {
   if (cont) {
     if (uef) {
       qDEBUG("Load UEF State");
-      LoadUEFState(FileName);
+      //LoadUEFState(FileName);
+      LoadUEF(FileName);
       cont = false;
     }
   }
