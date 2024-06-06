@@ -1,6 +1,6 @@
-add_executable(beebem main.cpp line.h log.c log.h beebem_sdl.cpp windows.cpp 
-  fake_registry.c
-  fake_registry.h user_config.c user_config.h serialdevices.cpp serialdevices.h
+add_executable(beebem main.cpp line.h log.cpp log.h beebem_sdl.cpp windows.cpp 
+  fake_registry.cpp
+  fake_registry.h user_config.cpp user_config.h serialdevices.cpp serialdevices.h
   csw.cpp csw.h 6502core.cpp atodconv.cpp avi.cpp beebmem.cpp beebsound.cpp
   beebwin.cpp cregistry.cpp debug.cpp disc1770.cpp disc8271.cpp econet.cpp
   sasi.cpp scsi.cpp serial.cpp speech.cpp sysvia.cpp tube.cpp uef.cpp

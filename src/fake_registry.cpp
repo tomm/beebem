@@ -17,8 +17,8 @@
 
 /* Malloc and Free (just use EG's versions):
  */
-#define FR_MALLOC EG_Malloc
-#define FR_FREE EG_Free
+#define FR_MALLOC malloc
+#define FR_FREE free
 
 /* Extra UNIX specific includes:
  */

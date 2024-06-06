@@ -39,6 +39,8 @@ static int audioDeviceId;
 #define AUDIO_BUFFER_LEN 1024
 
 bool maintain_4_3_aspect = true;
+// use a keymap attempting to preserve modern key positions
+bool use_symbolic_keymap = true;
 
 // The BeebEm emulator core (the Windows code) calls this when it wants to
 // play some samples.  We place those samples in our bloody huge buffer
@@ -575,9 +577,11 @@ struct BeebKeyTrans {
   int sym;
   int row;
   int col;
+  // shift state for symbolic mapping. 0=no change, 1=unshifted, 2=shifted
+  ShiftState shift_state;
 };
 
-static struct BeebKeyTrans SDLtoBeebEmKeymap[] = {
+static struct BeebKeyTrans sdl_positional_keymap[] = {
     // SDL          BBC     BBC KEY NAME (see doc/keyboard.jpg)
 
     {SDLK_TAB, 6, 0},    // TAB
@@ -685,6 +689,47 @@ static struct BeebKeyTrans SDLtoBeebEmKeymap[] = {
     {-1, -1, -1} // ** END OF LIST **
 };
 
+static struct BeebKeyTrans sdl_symbolic_keymap_shifted[] = {
+    {SDLK_SEMICOLON, 4, 8, ShiftState::Unshifted}, // :
+    {SDLK_QUOTE, 4, 7, ShiftState::Unshifted},     // beeb @
+    {SDLK_MINUS, 2, 8, ShiftState::Unshifted}, // _
+    {SDLK_EQUALS, 5, 7, ShiftState::Shifted}, // +
+    {SDLK_HASH, 1, 8, ShiftState::Shifted}, // ~
+    {SDLK_LEFTBRACKET, 3, 8, ShiftState::Shifted}, // {
+    {SDLK_RIGHTBRACKET, 5, 8, ShiftState::Shifted}, // }
+    {SDLK_0, 2, 6, ShiftState::Shifted},   // )
+    {SDLK_1, 3, 0, ShiftState::Shifted},   // !
+    {SDLK_2, 3, 1, ShiftState::Shifted},   // "
+    {SDLK_3, 2, 8, ShiftState::Shifted},   // £
+    {SDLK_4, 1, 2, ShiftState::Shifted},   // $
+    {SDLK_5, 1, 3, ShiftState::Shifted},   // %
+    {SDLK_6, 1, 8, ShiftState::Unshifted},   // ^
+    {SDLK_7, 3, 4, ShiftState::Shifted},   // &
+    {SDLK_8, 4, 8, ShiftState::Shifted},   // *
+    {SDLK_9, 1, 5, ShiftState::Shifted},   // (
+    {-1, -1, -1} // ** END OF LIST **
+};
+static struct BeebKeyTrans sdl_symbolic_keymap_unshifted[] = {
+    {SDLK_QUOTE, 2, 4, ShiftState::Shifted},     // beeb shifted 7 (')
+    {SDLK_SEMICOLON, 5, 7, ShiftState::Unshifted}, // ;
+    {SDLK_HASH, 1, 1, ShiftState::Shifted}, // # (shifted 3)
+    {SDLK_MINUS, 1, 7, ShiftState::Unshifted}, // -
+    {SDLK_EQUALS, 1, 7, ShiftState::Shifted}, // =
+    {SDLK_LEFTBRACKET, 3, 8, ShiftState::Unshifted}, // [
+    {SDLK_RIGHTBRACKET, 5, 8, ShiftState::Unshifted}, // ]
+    {SDLK_0, 2, 7, ShiftState::Unshifted},   // 0
+    {SDLK_1, 3, 0, ShiftState::Unshifted},   // 1
+    {SDLK_2, 3, 1, ShiftState::Unshifted},   // 2
+    {SDLK_3, 1, 1, ShiftState::Unshifted},   // 3
+    {SDLK_4, 1, 2, ShiftState::Unshifted},   // 4
+    {SDLK_5, 1, 3, ShiftState::Unshifted},   // 5
+    {SDLK_6, 3, 4, ShiftState::Unshifted},   // 6
+    {SDLK_7, 2, 4, ShiftState::Unshifted},   // 7
+    {SDLK_8, 1, 5, ShiftState::Unshifted},   // 8
+    {SDLK_9, 2, 6, ShiftState::Unshifted},   // 9
+    {-1, -1, -1} // ** END OF LIST **
+};
+
 /* Converts 'SDL_keysym' into BeebEm's 'int col, row' format.
  *
  * return value: 0 = no key available, 1 = key available (pressed, col and row
@@ -692,15 +737,30 @@ static struct BeebKeyTrans SDLtoBeebEmKeymap[] = {
  */
 
 int ConvertSDLKeyToBBCKey(SDL_Keysym keysym /*, int *pressed */, int *col,
-                          int *row) {
-  //	int bsymwaspressed;
-  //	Uint8 *keystate;
-  struct BeebKeyTrans *p = SDLtoBeebEmKeymap;
+                          int *row, ShiftState *artifical_shift) {
+  struct BeebKeyTrans *p;
 
-  // Calc the key's state.  We could probably pass this, but I'd rather
-  // have this function as self contained as possible.
-  //	keystate = SDL_GetKeyState(NULL);
-  //	bsymwaspressed = keystate[keysym.sym];
+  *artifical_shift = ShiftState::NoChange;
+
+  if (use_symbolic_keymap) {
+    if (keysym.mod & KMOD_SHIFT) {
+      p = sdl_symbolic_keymap_shifted;
+    } else {
+      p = sdl_symbolic_keymap_unshifted;
+    }
+    // Now we can convert this key into a BBC scancode:
+    for (; ((p->row != -1) && (p->sym != keysym.sym)); p++)
+      ;
+    if (p->row != -1 && p->col != -1) {
+      *(row) = p->row;
+      *(col) = p->col;
+      *(artifical_shift) = p->shift_state;
+      return 1;
+    }
+    // otherwise fall through to positional keymap
+  }
+
+  p = sdl_positional_keymap;
 
   // Now we can convert this key into a BBC scancode:
   for (; ((p->row != -1) && (p->sym != keysym.sym)); p++)
@@ -709,9 +769,6 @@ int ConvertSDLKeyToBBCKey(SDL_Keysym keysym /*, int *pressed */, int *col,
   // Map the key pressed. If not matched sets as -1, -1
   *(row) = p->row;
   *(col) = p->col;
-  //	*(pressed) = (bsymwaspressed ? 1 : 0);
 
-  //	printf("KEY [%d][%d][%d]\n", keysym.sym, p->row, p->col);
-
-  return (1);
+  return 1;
 }

@@ -1,4 +1,21 @@
-# beebem for UNIX
+# A rough SDL2 port of Beebem for Unix
+
+This is my hacked version of Beebem for Unix, with SDL2 frontend,
+and the GUI removed (as it was too much work to port).
+
+New emulator shortcut keys:
+
+RightCtrl-s - Toggle screen scaling methods
+RightCtrl-k - Toggle between symbolic and position keyboard mappings.
+
+Symbolic keyboard mapping (the default) attempts to map modern keyboard symbols to
+BBC keys, while positional mapping attempts to maintain BBC Micro key
+positions (useful for games, but horrible to type code on!)
+
+-------------------------------------
+# Here follows the old README.md
+
+## beebem for UNIX
 
 http://beebem-unix.bbcmicro.com/
 
@@ -37,6 +54,4 @@ that can enable or disable features.  they are:
 * `BEEBEM_ENABLE_ECONET`: enable econet for networking
 * `BEEBEM_DISABLE_REALTIME_SLIDER`: disable the realtime slider on any slide bars
 * `BEEBEM_DISABLE_WELCOME_MESSAGE`: disable the (annoying) welcome message
-* `BEEBEM_ENABLE_FULLSCREEN_FPS`: enable the FPS indicator when in fullscreen
 * `BEEBEM_ENABLE_SYSTEM_CP`: use the system `cp` instead of a (slower) C implementation
-* `BEEBEM_ENABLE_FORCE_COLORMAP`: force a colormap for 8-bit displays

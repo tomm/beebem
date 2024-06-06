@@ -61,6 +61,7 @@ extern int cfg_Fullscreen_Resolution;
 
 extern int cfg_VerticalOffset;
 extern bool maintain_4_3_aspect;
+extern bool use_symbolic_keymap;
 
 /* Timing:
  *
@@ -81,6 +82,11 @@ extern int cfg_WaitType;
 
 /*	-	-	-	-
  */
+enum class ShiftState {
+  NoChange,
+  Unshifted,
+  Shifted
+};
 
 extern int InitialiseSDL(int argc, char *argv[]);
 extern void UninitialiseSDL(void);
@@ -88,7 +94,7 @@ extern void RenderLine(int, int, int);
 extern void SaferSleep(unsigned int);
 extern unsigned char *GetSDLScreenLinePtr(int);
 extern void SetWindowTitle(char *);
-extern int ConvertSDLKeyToBBCKey(SDL_Keysym, int *, /* int*, */ int *);
+extern int ConvertSDLKeyToBBCKey(SDL_Keysym, int *, /* int*, */ int *, ShiftState *);
 extern void SetBeebEmEmulatorCoresPalette(unsigned char *, int);
 
 extern void AddBytesToSDLSoundBuffer(void *, int);

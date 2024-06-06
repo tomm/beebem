@@ -300,6 +300,12 @@ int main(int argc, char *argv[]) {
      */
     SDL_Event event;
 
+    // When using 'symbolic' keyboard layout, Sometimes
+    // an unshifted SDL keypress must result in a shifted
+    // beeb key state. Eg colon is unshifted on beeb, and
+    // shifted on modern UK layout.
+    bool real_shift_state = false;
+
     if (showing_menu != 1) {
 
       /* Execute emulator:
@@ -398,6 +404,11 @@ int main(int argc, char *argv[]) {
           // int pressed=0;
           int col = 0, row = 0;
 
+          if (event.key.keysym.sym == SDLK_LSHIFT ||
+              event.key.keysym.sym == SDLK_RSHIFT) {
+            real_shift_state = event.type == SDL_KEYDOWN;
+          }
+
           /*
           if (event.key.keysym.sym == SDLK_F12 ||
               event.key.keysym.sym == SDLK_F11 ||
@@ -429,6 +440,11 @@ int main(int argc, char *argv[]) {
                 skip_key = true;
                 maintain_4_3_aspect = !maintain_4_3_aspect;
               }
+              if (event.key.keysym.sym == SDLK_k) {
+                skip_key = true;
+                use_symbolic_keymap = !use_symbolic_keymap;
+                printf("Keymap: %s\n", use_symbolic_keymap ? "symbolic" : "positional");
+              }
               /*
               if (event.key.keysym.sym == SDLK_t) {
                 LoadUEF("Test.uef");
@@ -436,9 +452,10 @@ int main(int argc, char *argv[]) {
               */
             }
           }
+          ShiftState artificial_shift;
           /* Convert SDL key press into BBC key press: */
           if (!skip_key && ConvertSDLKeyToBBCKey(event.key.keysym /*, &pressed */, &col,
-                                    &row)) {
+                                    &row, &artificial_shift)) {
 
             /* If X11 and Caps Lock then release automatically after 20
              * passes to the emulator core (doesn't X11 suck)..
@@ -459,10 +476,25 @@ int main(int argc, char *argv[]) {
                */
               //							if
               //(pressed)
-              if (event.type == SDL_KEYDOWN)
+              if (event.type == SDL_KEYDOWN) {
+                switch (artificial_shift) {
+                  case ShiftState::NoChange: break;
+                  case ShiftState::Shifted: BeebKeyDown(0,0); break;
+                  case ShiftState::Unshifted: BeebKeyUp(0,0); break;
+                }
                 BeebKeyDown(row, col);
-              else
+              } else {
+                switch (artificial_shift) {
+                  case ShiftState::NoChange: break;
+                  default:
+                    if (real_shift_state) {
+                      BeebKeyDown(0,0);
+                    } else {
+                      BeebKeyUp(0,0);
+                    }
+                }
                 BeebKeyUp(row, col);
+              }
             }
 
             //						/* Release Caps lock for
