@@ -8,9 +8,10 @@ New emulator shortcut keys:
 RightCtrl-s - Toggle screen scaling methods
 RightCtrl-k - Toggle between symbolic and position keyboard mappings.
 
-Symbolic keyboard mapping (the default) attempts to map modern keyboard symbols to
-BBC keys, while positional mapping attempts to maintain BBC Micro key
-positions (useful for games, but horrible to type code on!)
+Positional keyboard mapping (the default) attempts to maintain BBC Micro 
+key positions (useful for games, but horrible to type code on!)
+Alternatively, symbolic keyboard mapping attempts to map modern keyboard
+symbols to BBC keys. Toggle between them with RightCtrl-k
 
 -------------------------------------
 # Here follows the old README.md

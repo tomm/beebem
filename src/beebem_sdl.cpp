@@ -40,7 +40,7 @@ static int audioDeviceId;
 
 bool maintain_4_3_aspect = true;
 // use a keymap attempting to preserve modern key positions
-bool use_symbolic_keymap = true;
+bool use_symbolic_keymap = false;
 
 // The BeebEm emulator core (the Windows code) calls this when it wants to
 // play some samples.  We place those samples in our bloody huge buffer
